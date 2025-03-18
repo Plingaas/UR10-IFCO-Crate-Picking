@@ -16,7 +16,7 @@ device_product_line = str(device.get_info(rs.camera_info.product_line))
 
 found_rgb = False
 for s in device.sensors:
-    if s.get_info(rs.camera_info.name) == 'RGB Camera':
+    if s.get_info(rs.camera_info.name) == "RGB Camera":
         found_rgb = True
         break
 if not found_rgb:
@@ -42,27 +42,34 @@ align = rs.align(align_to)
 context = zmq.Context()
 
 yolo_req_receiver = context.socket(zmq.PULL)
-yolo_req_receiver.connect(f"tcp://localhost:{CAMERA_REQ_PORT}") 
+yolo_req_receiver.connect(f"tcp://localhost:{CAMERA_REQ_PORT}")
 
-yolo_rep_sender = context.socket(zmq.PUSH) 
+yolo_rep_sender = context.socket(zmq.PUSH)
 yolo_rep_sender.bind(f"tcp://*:{CAMERA_SEND_PORT}")
 
+
 def pack_image(image):
-    _, img_encoded = cv2.imencode('.jpg', image)
-    data = msgpack.packb({"type": "image", "image": img_encoded.tobytes()}, default=m.encode)
+    _, img_encoded = cv2.imencode(".jpg", image)
+    data = msgpack.packb(
+        {"type": "image", "image": img_encoded.tobytes()}, default=m.encode
+    )
     return data
+
 
 def pack_depth(data):
-    data = msgpack.packb({"type": "depth", 
-                          "shape": data[0].shape, 
-                          "depth": data[0].tobytes()}, default=m.encode)
+    data = msgpack.packb(
+        {"type": "depth", "shape": data[0].shape, "depth": data[0].tobytes()},
+        default=m.encode,
+    )
     return data
 
+
 def send_image(image, depth):
-    print("Sending frame")    
+    print("Sending frame")
     image_data = pack_image(image)
     depth_data = pack_depth(depth)
     yolo_rep_sender.send_multipart([image_data, depth_data])
+
 
 while True:
     frames = pipeline.wait_for_frames()
@@ -80,7 +87,6 @@ while True:
     try:
         req = yolo_req_receiver.recv_string(zmq.NOBLOCK)
         send_image(color_image, depth_image)
-        
+
     except:
         continue
-    
