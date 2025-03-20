@@ -5,6 +5,7 @@ from time import sleep
 from helper import *
 
 controller = rtde_control.RTDEControlInterface("192.168.1.205")
+io = rtde_io.RTDEIOInterface("192.168.1.205")
 
 def moveToXYZ(x, y, z, speed=0.2, acc=0.5):
     controller.moveL([x, y, z, -2.23, 2.21, 0], speed, acc, True)
@@ -18,12 +19,34 @@ def moveToWithYaw(x, y, z, yaw, speed=0.1, acc=0.1):
     rx, ry, rz = rotate_ur10(180, 0, np.deg2rad(yaw))
     controller.moveL([x, y, z, rx, ry, rz], speed, acc)
 
-def setOutput(pin, state):
-    io = rtde_io.RTDEIOInterface("192.168.1.205")
-    io.setStandardDigitalOut(pin, state)
+def set_payload(mass):
+    controller.setPayload(mass, [0,0,0])
+
+def gripper_force_open():
+    io.setStandardDigitalOut(3, False)
+    sleep(0.01)
+    io.setStandardDigitalOut(7, True)
+    io.setStandardDigitalOut(6, True)
+    sleep(0.01)
+    io.setStandardDigitalOut(3, True)
+
+def gripper_force_close():
+    io.setStandardDigitalOut(3, False)
+    sleep(0.01)
+    io.setStandardDigitalOut(6, False)
+    io.setStandardDigitalOut(7, False)
+    sleep(0.01)
+    io.setStandardDigitalOut(3, True)
+
+def gripper_off():
+    io.setStandardDigitalOut(3, False)
+    sleep(0.01)
+    io.setStandardDigitalOut(6, False)
+    io.setStandardDigitalOut(7, False)
 
 
 def moveDownWithForce(force):
+    set_payload(1)
     task_frame = [0, 0, 0, 0, 0, 0]
     selection_vector = [0, 0, 1, 0, 0, 0]
     wrench_down = [0, 0, force, 0, 0, 0]
@@ -32,39 +55,36 @@ def moveDownWithForce(force):
     force_type = 2
 
     # Execute 500Hz control loop for 4 seconds, each cycle is 2ms
-    for i in range(500):
+    for i in range(100):
         t_start = controller.initPeriod()
-        # First move the robot down for 2 seconds, then up for 2 seconds
-        if i < 300:
-            controller.forceMode(
-                task_frame, selection_vector, wrench_down, force_type, limits
-            )
+        controller.forceMode(task_frame,
+                             selection_vector,
+                             wrench_down,
+                             force_type,
+                             limits)
         controller.waitPeriod(t_start)
+    controller.forceModeStop()
+    set_payload(4)
 
 
 def pickup(x, y, z, rx, ry, rz, speed=0.1, acc=0.1):
-    dx = 0
-    dy = 0
+    moveTo(x, y, z, rx, ry, rz, speed=1.2, acc=0.5)
 
-    moveTo(x + dx, y + dy, z, rx, ry, rz, speed=1.2, acc=0.5)
-    setOutput(7, True)
-    moveTo(x + dx, y + dy, z - 0.077, rx, ry, rz, speed=0.2, acc=0.5)
-    moveTo(x + dx, y + dy, z - 0.060, rx, ry, rz, speed=0.05, acc=0.5)
-    setOutput(7, False)
+    gripper_force_open()
+    moveTo(x, y, z - 0.070, rx, ry, rz, speed=0.05, acc=0.5)
+    moveDownWithForce(-50)
+    moveTo(x, y - 0.003, z - 0.050, rx, ry, rz, speed=0.05, acc=0.5)
+    gripper_off()
+
     moveTo(x, y, z + 0.050, rx, ry, rz, speed, acc)
 
-
 def place(x, y, z, rx, ry, rz, speed=0.1, acc=0.1):
-    dx = 0
-    dy = 0
-    moveTo(x + dx, y + dy, z + 0.115, rx, ry, rz, speed, acc)
-    moveTo(x + dx, y + dy, z + 0.050, rx, ry, rz, speed, acc)
-    moveTo(x, y, z, rx, ry, rz, speed, acc)
-
-    setOutput(7, False)
-    sleep(0.5)
     moveTo(x, y, z + 0.115, rx, ry, rz, speed, acc)
-
+    moveTo(x, y, z + 0.005, rx, ry, rz, speed, acc)
+    gripper_force_close()
+    moveDownWithForce(-50)
+    moveTo(x, y, z + 0.115, rx, ry, rz, speed, acc)
+    gripper_off()
 
 def pick_crate(pose):
     dx = pose[0]
@@ -96,14 +116,15 @@ def place_crate(i):
     rx, ry, rz = rotate_ur10(180, 0, np.rad2deg(0))
     x = -0.311
     y = 0.992
+    z = 0.385 + 0.205 * (int(i/4))
 
-    if i == 1:
+    if i%4 == 1:
         x += 0.605
-    if i == 2:
+    if i%4 == 2:
         y -= 0.405
-    if i == 3:
+    if i%4 == 3:
         x += 0.605
         y -= 0.405
 
-    moveTo(x, y, 0.500, rx, ry, rz, speed=0.5, acc=0.5)
-    place(x, y, 0.382 - 3e-3 * (i % 2) + 0.205 * (int(i/4)), rx, ry, rz)
+    moveTo(x, y, z + 0.115, rx, ry, rz, speed=1.5, acc=0.5)
+    place(x, y, z, rx, ry, rz)

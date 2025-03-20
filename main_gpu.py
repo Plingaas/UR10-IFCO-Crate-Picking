@@ -85,7 +85,7 @@ if __name__ == "__main__":
             show=False,
             retina_masks=True,
             verbose=False,
-            conf=0.6,
+            conf=0.8,
             device=0
         )
         yolo_t1 = time()
@@ -129,7 +129,7 @@ if __name__ == "__main__":
                     pcd.points = points
                     pcd, _ = pcd_remove_outliers(pcd, 50, 2.0)
                     pcd = pcd_transform_L515_data(pcd)
-                    #pcd = pcd.voxel_down_sample(voxel_size=0.01)
+                    pcd = pcd.voxel_down_sample(voxel_size=0.01)
                     plane_model, plane_cloud = estimate_plane(pcd)
                     plane_cloud = smooth_plane_cloud(plane_cloud, plane_model)
                     icp_transform = ICP(plane_cloud)
@@ -138,14 +138,27 @@ if __name__ == "__main__":
                     #pcd_move_center_to(crates[i], pose[:3]*1e-3)
                     #vis.update_geometry(crates[i])
 
+        if len(crate_poses) == 0:
+            continue
+
         crate_poses.sort(key=lambda x: x[2], reverse=True)
         pick_crate(crate_poses[0])
-        moveToWithYaw(0.300, -0.400, 0.600, 0, speed=0.5, acc=0.5)
-        moveToWithYaw(0.550, 0.0, 0.600, 0, speed=0.5, acc=0.5)
-        moveToWithYaw(0.550, 0.500, 0.600, 0, speed=0.5, acc=0.5)
+
+        blend = 0.1
+        waypoints = []
+        waypoints.append([0.300, -0.400, 0.600, 3.141, 0, 0, 1.50, 0.5, blend])
+        waypoints.append([0.550, 0.000, 0.700, 3.141, 0, 0, 1.50, 1.0, blend])
+        waypoints.append([0.550, 0.500, 0.700, 3.141, 0, 0, 1.50, 1.0, blend])
+        waypoints.append([0.550, 0.500, 0.700, 3.141, 0, 0, 1.50, 1.0, blend])
+        controller.moveL(waypoints)
+
         place_crate(n_crate)
-        moveToWithYaw(0.550, 0.500, 0.600, 0, speed=0.5, acc=0.5)
-        moveToWithYaw(0.550, 0.0, 0.600, 0, speed=0.5, acc=0.5)
+
+        waypoints = []
+        waypoints.append([0.550, 0.500, 0.700, 3.141, 0, 0, 1.0, 1, blend])
+        waypoints.append([0.550, 0.0, 0.700, 3.141, 0, 0, 1.0, 1, blend])
+        waypoints.append([0.550, 0.0, 0.700, 3.141, 0, 0, 1.0, 1, blend])
+        controller.moveL(waypoints)
         n_crate += 1
 
         #vis.poll_events()
