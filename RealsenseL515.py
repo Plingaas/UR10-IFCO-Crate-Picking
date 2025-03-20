@@ -11,10 +11,10 @@ class RealsenseL515:
         self.device = self.pipeline_profile.get_device()
         self.device_product_line = str(self.device.get_info(rs.camera_info.product_line))
 
-    def enable_rgb_camera(self, res=(1920, 1080), fps:int = 30) -> None:
+    def enable_rgb_camera(self, res=(1920, 1080), fps = 30) -> None:
         self.config.enable_stream(rs.stream.color, res[0], res[1], rs.format.bgr8, fps)
 
-    def enable_depth_camera(self, res=(640, 480), fps:int=30) -> None:
+    def enable_depth_camera(self, res=(640, 480), fps = 30) -> None:
         self.config.enable_stream(rs.stream.depth, res[0], res[1], rs.format.z16, fps)
 
     def start_streaming(self) -> None:
@@ -47,7 +47,11 @@ class RealsenseL515:
         return self.intrinsics
 
     def get_color_frame(self, frames):
-        return frames.get_color_frame().get_data()
+        return frames.get_color_frame()
 
     def get_depth_frame(self, frames):
-        return frames.get_depth_frame().get_data()
+        return frames.get_depth_frame()
+
+    def get_image_from_frame(self, frame):
+        return frame.get_data()
+

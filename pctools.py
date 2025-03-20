@@ -2,6 +2,7 @@ import open3d as o3d
 import numpy as np
 from helper import *
 from time import time
+import cv2
 
 CRATE_FRONT_PCD = load_crate_pc_front()
 CRATE_FRONT_PCD.estimate_normals(
@@ -38,7 +39,7 @@ def ICP(pcd):
     # Perform ICP with rigid transformation (translation and rotation)
     threshold = 3  # Maximum distance threshold for matching points
     trans_init = np.eye(4)  # Initial transformation (identity matrix)
-    
+
     icp_result = o3d.pipelines.registration.registration_icp(
         pcd,
         CRATE_FRONT_PCD,
@@ -49,27 +50,19 @@ def ICP(pcd):
             max_iteration=200
         ),  # Max iterations
     )
-
+    #o3d.visualization.draw_geometries([pcd, CRATE_FRONT_PCD])
     # Get the transformation matrix
-    icp_transform = icp_result.transformation
-    icp_rotation = icp_transform[:3, :3]
-    inv_icp_transform = np.linalg.inv(icp_transform)
+    return icp_result.transformation
 
+def estimate_pose(transform):
+    inv_transform = np.linalg.inv(transform)
 
-    # UNDO ICP TRANSFORM
     zero_point = np.append((0, 0, 0), 1)  # (x, y, z, 1)
+    pose = (inv_transform @ zero_point)
+    pose[0] *= -1
 
-    original_point_h = inv_icp_transform @ zero_point
-    pos = original_point_h[:3] * -1e3
-    pos[1] *= -1
-    pos[2] *= -1
+    rot = transform[:3, :3]
+    rot_vec, _ = cv2.Rodrigues(rot)
+    pose[3] = rot_vec[2][0]
 
-    rot_vec, _ = cv2.Rodrigues(icp_rotation)
-    yaw = -rot_vec[2][0]
-
-    #coordinate_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
-    #    size=0.5
-    #)  # Adjust size if needed
-
-    #o3d.visualization.draw_geometries([pcd])
-    return pos, yaw
+    return pose

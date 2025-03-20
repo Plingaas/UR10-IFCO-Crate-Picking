@@ -7,17 +7,16 @@ from helper import *
 controller = rtde_control.RTDEControlInterface("192.168.1.205")
 
 def moveToXYZ(x, y, z, speed=0.2, acc=0.5):
-    controller.moveL([x / 1000, y / 1000, z / 1000, -2.23, 2.21, 0], speed, acc, True)
+    controller.moveL([x, y, z, -2.23, 2.21, 0], speed, acc, True)
 
 
 def moveTo(x, y, z, rx, ry, rz, speed=0.1, acc=0.1):
-    controller.moveL([x / 1000, y / 1000, z / 1000, rx, ry, rz], speed, acc)
+    controller.moveL([x, y, z, rx, ry, rz], speed, acc)
 
 
 def moveToWithYaw(x, y, z, yaw, speed=0.1, acc=0.1):
     rx, ry, rz = rotate_ur10(180, 0, np.deg2rad(yaw))
-    controller.moveL([x / 1000, y / 1000, z / 1000, rx, ry, rz], speed, acc)
-
+    controller.moveL([x, y, z, rx, ry, rz], speed, acc)
 
 def setOutput(pin, state):
     io = rtde_io.RTDEIOInterface("192.168.1.205")
@@ -49,25 +48,30 @@ def pickup(x, y, z, rx, ry, rz, speed=0.1, acc=0.1):
 
     moveTo(x + dx, y + dy, z, rx, ry, rz, speed=1.2, acc=0.5)
     setOutput(7, True)
-    moveTo(x + dx, y + dy, z - 75, rx, ry, rz, speed=0.2, acc=0.5)
-    moveTo(x + dx, y + dy, z - 60, rx, ry, rz, speed=0.05, acc=0.5)
+    moveTo(x + dx, y + dy, z - 0.077, rx, ry, rz, speed=0.2, acc=0.5)
+    moveTo(x + dx, y + dy, z - 0.060, rx, ry, rz, speed=0.05, acc=0.5)
     setOutput(7, False)
-    moveTo(x, y, z + 50, rx, ry, rz, speed, acc)
+    moveTo(x, y, z + 0.050, rx, ry, rz, speed, acc)
 
 
 def place(x, y, z, rx, ry, rz, speed=0.1, acc=0.1):
     dx = 0
     dy = 0
-    moveTo(x + dx, y + dy, z + 115, rx, ry, rz, speed, acc)
-    moveTo(x + dx, y + dy, z + 50, rx, ry, rz, speed, acc)
+    moveTo(x + dx, y + dy, z + 0.115, rx, ry, rz, speed, acc)
+    moveTo(x + dx, y + dy, z + 0.050, rx, ry, rz, speed, acc)
     moveTo(x, y, z, rx, ry, rz, speed, acc)
 
     setOutput(7, False)
     sleep(0.5)
-    moveTo(x + 1, y, z + 115, rx, ry, rz, speed, acc)
+    moveTo(x, y, z + 0.115, rx, ry, rz, speed, acc)
 
 
-def pick_crate(dx, dy, dz, yaw):
+def pick_crate(pose):
+    dx = pose[0]
+    dy = pose[1]
+    dz = pose[2]
+    yaw = pose[3]
+
     robot_to_cam_y = 125 - 25 + 64.3 + 16 + 26 - 4.5
     robot_to_cam = [0, -robot_to_cam_y, 25]
 
@@ -80,9 +84,9 @@ def pick_crate(dx, dy, dz, yaw):
     gripper_y = 0
     gripper_z = 100
 
-    x = robot_to_cam[0] + dx + crate_offset_x + gripper_x
-    y = robot_to_cam[1] + dy + crate_offset_y + gripper_y
-    z = robot_to_cam[2] + dz + crate_offset_z + gripper_z
+    x = dx + (robot_to_cam[0] + crate_offset_x + gripper_x) * 1e-3
+    y = dy + (robot_to_cam[1] + crate_offset_y + gripper_y) * 1e-3
+    z = dz + (robot_to_cam[2] + crate_offset_z + gripper_z) * 1e-3
 
     rx, ry, rz = rotate_ur10(180, 0, np.rad2deg(yaw - np.pi / 2))
     pickup(x, y, z, rx, ry, rz)
@@ -90,16 +94,16 @@ def pick_crate(dx, dy, dz, yaw):
 
 def place_crate(i):
     rx, ry, rz = rotate_ur10(180, 0, np.rad2deg(0))
-    x = -311
-    y = 992
+    x = -0.311
+    y = 0.992
 
     if i == 1:
-        x += 605
+        x += 0.605
     if i == 2:
-        y -= 405
+        y -= 0.405
     if i == 3:
-        x += 605
-        y -= 405
+        x += 0.605
+        y -= 0.405
 
-    moveTo(x, y, 500, rx, ry, rz, speed=1.2, acc=0.5)
-    place(x, y, 385 - 3 * (i % 2), rx, ry, rz)
+    moveTo(x, y, 0.500, rx, ry, rz, speed=0.5, acc=0.5)
+    place(x, y, 0.382 - 3e-3 * (i % 2) + 0.205 * (int(i/4)), rx, ry, rz)

@@ -148,7 +148,6 @@ def pcd_box_size(pcd, verbose=False):
 
 
 def pcd_remove_outliers(pcd, nn=20, std=1.0):
-
     pcd_clean, inliers = pcd.remove_statistical_outlier(nn, std)
     return pcd_clean, inliers
 
@@ -207,7 +206,9 @@ def plane_to_rotation_matrix(plane_normal, target_axis=np.array([0, 0, 1])):
 
 
 def pcd_transform_L515_data(pcd):
-    rot_matrix = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
+    rot_matrix = np.array([[0, 1, 0],
+                           [0, 0, -1],
+                           [1, 0, 0]])
 
     pcd.rotate(rot_matrix, (0, 0, 0))
     pcd_scale(pcd, 0.25, (0, 0, 0))
