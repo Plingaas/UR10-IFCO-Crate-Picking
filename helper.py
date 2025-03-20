@@ -3,8 +3,30 @@ import open3d as o3d
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
 import cv2
+import pyrealsense2 as rs
+import cupy as cp
+
 
 DATA_FOLDER = "data"
+
+
+def get_L515_intrinsics():
+    depth_intrinsics = rs.intrinsics()
+    depth_intrinsics.width = 1920
+    depth_intrinsics.height = 1080
+    depth_intrinsics.ppx = 982.673
+    depth_intrinsics.ppy = 547.614
+    depth_intrinsics.fx = 1352.92
+    depth_intrinsics.fy = 1354.45
+    depth_intrinsics.model = rs.distortion.brown_conrady
+    depth_intrinsics.coeffs = [
+        0.171722,
+        -0.526011,
+        -0.000589736,
+        -0.000417008,
+        0.486631,
+    ]
+    return depth_intrinsics
 
 
 def pcd_rotate_x(pcd, angle):
@@ -97,10 +119,19 @@ def load_crate_pc():
 
     # Convert mesh to a point cloud using uniform sampling
     pcd = mesh.sample_points_uniformly(
-        number_of_points=250000
+        number_of_points=25000
     )  # Adjust point count as needed
     pcd_move_center_to(pcd, (0.2, 0.3, 0.075))
     return pcd
+
+
+def load_crate_pc_front() -> o3d.geometry.PointCloud:
+    crate_pcd = load_crate_pc()
+    points = np.asarray(crate_pcd.points)
+    points = points[points[:, 1] < 0.002]
+    crate_pcd.points = o3d.utility.Vector3dVector(points)
+    crate_pcd.voxel_down_sample(voxel_size=0.01)
+    return crate_pcd
 
 
 def pcd_box_size(pcd, verbose=False):
@@ -112,11 +143,13 @@ def pcd_box_size(pcd, verbose=False):
         print(
             f"Box size: {bbox_size}.\nx_min: {bbox_min[0]} x_max: {bbox_max[0]} \ny_min: {bbox_min[1]} y_max: {bbox_max[1]} \nz_min: {bbox_min[2]} z_max: {bbox_max[2]}"
         )
+    print(type(bbox_size))
     return bbox_size
 
 
 def pcd_remove_outliers(pcd, nn=20, std=1.0):
-    pcd_clean, inliers = pcd.remove_statistical_outlier(nb_neighbors=nn, std_ratio=std)
+
+    pcd_clean, inliers = pcd.remove_statistical_outlier(nn, std)
     return pcd_clean, inliers
 
 
@@ -248,3 +281,24 @@ def rotate_ur10(x_deg=0, y_deg=0, z_deg=0):
     # Convert back to axis-angle
     new_rotation_vector, _ = cv2.Rodrigues(R_new)
     return tuple(new_rotation_vector.flatten())
+
+
+def get_world_points(x_pixels, y_pixels, nonzero_depths):
+    """Computes 3D world coordinates from depth image pixels on the GPU."""
+    intrinsics = get_L515_intrinsics()  # Assumed to be accessible
+
+    # Convert intrinsics to GPU memory
+    ppx = cp.float32(intrinsics.ppx)
+    ppy = cp.float32(intrinsics.ppy)
+    fx = cp.float32(intrinsics.fx)
+    fy = cp.float32(intrinsics.fy)
+
+    # Compute world coordinates on GPU (No Loops 🚀)
+    x_world = ((x_pixels - ppx) / fx) * nonzero_depths
+    y_world = ((y_pixels - ppy) / fy) * nonzero_depths
+    z_world = nonzero_depths  # Depth in meters
+
+    # Stack into (N, 3) CuPy array
+    points_3d = cp.column_stack((x_world, y_world, z_world))
+
+    return points_3d  # Keeps everything on the GPU 🚀

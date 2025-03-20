@@ -4,6 +4,7 @@ import msgpack
 import msgpack_numpy as m
 import cupy as cp
 from ports import *
+from time import time
 
 # Initialize ZeroMQ context & sockets
 context = zmq.Context()
@@ -22,7 +23,6 @@ def pack_image(image_gpu):
         {"type": "image", "image": img_encoded.tobytes()}, default=m.encode
     )
 
-
 def pack_depth(depth_gpu):
     """Packs a depth image (CuPy) for ZeroMQ"""
     depth_cpu = cp.asnumpy(depth_gpu)  # Move to CPU
@@ -31,7 +31,6 @@ def pack_depth(depth_gpu):
         default=m.encode,
     )
 
-
 def send_image(image_gpu, depth_gpu):
     """Sends the processed RGB & depth images via ZeroMQ"""
     print("📤 Sending frame...")
@@ -39,21 +38,42 @@ def send_image(image_gpu, depth_gpu):
     depth_data = pack_depth(depth_gpu)
     yolo_rep_sender.send_multipart([image_data, depth_data])
 
+color_image_gpu = cp.asarray(
+    cv2.imread("devfolder/color.png", cv2.IMREAD_UNCHANGED), dtype=cp.uint8
+)
+color_image_gpu = cp.rot90(color_image_gpu)  # Rotate 90° counterclockwise
 
-while True:
-    # Load images to GPU
-    color_image_gpu = cp.asarray(
-        cv2.imread("devfolder/color.png", cv2.IMREAD_UNCHANGED), dtype=cp.uint8
-    )
-    depth_image_gpu = cp.asarray(
-        cv2.imread("devfolder/depth.png", cv2.IMREAD_UNCHANGED), dtype=cp.uint16
-    )
+depth_image_gpu = cp.asarray(
+    cv2.imread("devfolder/depth.png", cv2.IMREAD_UNCHANGED), dtype=cp.uint16
+)
+t = time()
+n = 0
+fps = 0
+if __name__ == "__main__":
+    while True:
+        # Load images to GPU
 
-    # Rotate color image on GPU
-    color_image_gpu = cp.rot90(color_image_gpu, k=-1)  # Rotate 90° counterclockwise
 
-    try:
-        req = yolo_req_receiver.recv_string(zmq.NOBLOCK)  # Non-blocking receive
-        send_image(color_image_gpu, depth_image_gpu)
-    except zmq.Again:
-        pass
+        # Rotate color image on GPU
+        color_image_cpu = cp.asnumpy(color_image_gpu)
+        color_image_cpu = cv2.resize(color_image_cpu, (540, 960))
+
+        # fps
+        n += 1
+        if (time() - t >= 0.5):
+            t += 0.5
+            fps = n*2
+            n = 0
+            print(fps)
+
+        #cv2.putText(color_image_cpu, f"fps: {int(fps)}", (10, 30), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), 1)
+        #cv2.imshow("color", color_image_cpu)
+        #cv2.waitKey(1)
+
+
+
+        try:
+            req = yolo_req_receiver.recv_string(zmq.NOBLOCK)  # Non-blocking receive
+            send_image(color_image_gpu, depth_image_gpu)
+        except zmq.Again:
+            pass

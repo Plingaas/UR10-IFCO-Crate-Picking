@@ -4,6 +4,7 @@ import numpy as np
 import msgpack
 import msgpack_numpy as m
 from ports import *
+from time import time
 
 print("Setting up Yolo")
 from ultralytics import YOLO
@@ -45,8 +46,16 @@ def pack_data(data):
 def send_data(image, depth):
     pc_extract_rep_sender.send_multipart([])
 
-
+t = time()
+fps = 0
+n = 0
 while True:
+    n += 1
+    if (time() - t >= 1.0):
+        t += 1.0
+        fps = n
+        n = 0
+        print(fps)
     camera_req_sender.send_string("I want a frame")
     image, depth = camera_rep_receiver.recv_multipart()
     img_data = msgpack.unpackb(image, object_hook=m.decode)
@@ -59,7 +68,7 @@ while True:
     color_image = cv2.imdecode(np.frombuffer(img_data, np.uint8), cv2.IMREAD_COLOR)
     depth_image = np.frombuffer(depth_data, np.uint16).reshape(depth_shape)
 
-    results = model.predict(color_image, show=False, conf=0.6, device=0)
+    results = model.predict([color_image], verbose=True, show=False, conf=0.6, device=0, retina_masks=True)
     binary_masks = []
     for result in results:
         if result.masks:
@@ -86,8 +95,6 @@ while True:
                     2,
                 )
                 cv2.rectangle(color_image, (x1, y1), (x2, y2), color.tolist(), 2)
-
-                mask = cv2.resize(mask, (1080, 1920), interpolation=cv2.INTER_NEAREST)
 
                 mask_grayscale = (mask > 0.001).astype(np.uint8) * ((i + 1) * 40)
                 mask_binary = ((mask > 0.001).astype(np.uint8) * 255) // 255
@@ -116,5 +123,5 @@ while True:
     cv2.imshow("Yolo frame", stacked)
     cv2.waitKey(1)
 
-    data = pack_data()
-    pc_extract_req_receiver.recv_string()  # Wait for request
+    #data = pack_data()
+    #pc_extract_req_receiver.recv_string()  # Wait for request

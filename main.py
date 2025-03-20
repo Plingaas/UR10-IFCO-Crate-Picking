@@ -148,6 +148,7 @@ def ICP(pcd):
     posx = x
     posy = y
     posz = -z
+
     rot_vec, _ = cv2.Rodrigues(transformation_matrix[:3, :3])
     yaw = -rot_vec[2][0]
 
