@@ -14,7 +14,7 @@ class RealsenseD415:
         """Enable the RGB camera stream."""
         self.config.enable_stream(rs.stream.color, res[0], res[1], rs.format.bgr8, fps)
 
-    def enable_depth_camera(self, res=(640, 480), fps: int = 30) -> None:
+    def enable_depth_camera(self, res=(1280, 720), fps: int = 30) -> None:
         """Enable the Depth camera stream."""
         self.config.enable_stream(rs.stream.depth, res[0], res[1], rs.format.z16, fps)
 
@@ -52,13 +52,13 @@ class RealsenseD415:
 
     def get_intrinsics(self, aligned_depth_frame):
         """Get the camera intrinsics from the aligned depth frame."""
-        self.intrinsics = aligned_depth_frame.profile.as_video_stream_profile().intrinsics
+        self.intrinsics = aligned_depth_frame.get_profile().as_video_stream_profile().get_intrinsics()
         return self.intrinsics
 
     def get_color_frame(self, frames):
         """Get the color frame from the frames."""
-        return frames.get_color_frame().get_data()
+        return frames.get_color_frame()
 
     def get_depth_frame(self, frames):
         """Get the depth frame from the frames."""
-        return frames.get_depth_frame().get_data()
+        return frames.get_depth_frame()

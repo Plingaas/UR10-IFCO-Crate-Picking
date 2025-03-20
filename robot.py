@@ -6,7 +6,6 @@ from helper import *
 
 controller = rtde_control.RTDEControlInterface("192.168.1.205")
 
-
 def moveToXYZ(x, y, z, speed=0.2, acc=0.5):
     controller.moveL([x / 1000, y / 1000, z / 1000, -2.23, 2.21, 0], speed, acc, True)
 

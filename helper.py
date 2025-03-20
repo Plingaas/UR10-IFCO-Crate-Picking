@@ -283,9 +283,8 @@ def rotate_ur10(x_deg=0, y_deg=0, z_deg=0):
     return tuple(new_rotation_vector.flatten())
 
 
-def get_world_points(x_pixels, y_pixels, nonzero_depths):
+def get_world_points(x_pixels, y_pixels, nonzero_depths, intrinsics):
     """Computes 3D world coordinates from depth image pixels on the GPU."""
-    intrinsics = get_L515_intrinsics()  # Assumed to be accessible
 
     # Convert intrinsics to GPU memory
     ppx = cp.float32(intrinsics.ppx)
