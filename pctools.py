@@ -13,11 +13,11 @@ def estimate_plane(pcd):
     pcd.estimate_normals(
         search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.02, max_nn=50)
     )
-    
+
     plane_model, inliers = pcd.segment_plane(
         distance_threshold=0.0125,  # Lower = more precise
         ransac_n=5,
-        num_iterations=250,  # Higher = more robust
+        num_iterations=2500,  # Higher = more robust
     )
     plane_cloud = pcd.select_by_index(inliers)
     return plane_model, plane_cloud
@@ -46,7 +46,7 @@ def ICP(pcd):
         trans_init,
         o3d.pipelines.registration.TransformationEstimationPointToPlane(),  # More accurate
         o3d.pipelines.registration.ICPConvergenceCriteria(
-            max_iteration=20
+            max_iteration=200
         ),  # Max iterations
     )
 

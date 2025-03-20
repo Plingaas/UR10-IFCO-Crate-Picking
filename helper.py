@@ -119,7 +119,7 @@ def load_crate_pc():
 
     # Convert mesh to a point cloud using uniform sampling
     pcd = mesh.sample_points_uniformly(
-        number_of_points=25000
+        number_of_points=250000
     )  # Adjust point count as needed
     pcd_move_center_to(pcd, (0.2, 0.3, 0.075))
     return pcd

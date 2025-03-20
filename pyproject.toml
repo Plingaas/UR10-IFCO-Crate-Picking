@@ -2,7 +2,7 @@
 target-version = "py310"
 
 lint.select = ["E", "F", "YTT", "W", "YTT", "ASYNC", "T10", "ISC", "G", "PIE", "RET", "INT", "RUF", "NPY", "PLE", "PLC", "PLW", "UP", "C4", "LOG", "ANN", "C4", "PGH", "SLF", "FA", "PERF", "A"]
-lint.ignore = ["RET504", "PERF203", "ISC001", "ISC002", "ANN401", "ASYNC109"]
+lint.ignore = ["RET504", "PERF203", "ISC001", "ISC002", "ANN401", "ASYNC109", "ANN201", "ANN001"]
 exclude = ["venv", "build", "dist"]
 line-length = 88
 fix = true

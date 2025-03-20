@@ -1,11 +1,12 @@
 import open3d as o3d
 import numpy as np
 from helper import *
-import pyrealsense2 as rs
 import cv2
 from ultralytics import YOLO
 from robot import *
 from pctools import *
+from Camera import Camera
+from pyrealsense2 import rs2_deproject_pixel_to_point
 
 ## SETUP
 CAMERA_TALL = True
@@ -18,40 +19,14 @@ model.predict(setup_image, conf=0.8, device=0, verbose=False)
 
 print("Setting up Intel Realsense L515")
 # SETUP REALSENSE
-pipeline = rs.pipeline()
 
-config = rs.config()
-
-pipeline_wrapper = rs.pipeline_wrapper(pipeline)
-pipeline_profile = config.resolve(pipeline_wrapper)
-device = pipeline_profile.get_device()
-device_product_line = str(device.get_info(rs.camera_info.product_line))
-
-found_rgb = False
-for s in device.sensors:
-    if s.get_info(rs.camera_info.name) == "RGB Camera":
-        found_rgb = True
-        break
-if not found_rgb:
-    print("The demo requires Depth camera with Color sensor")
-    exit(0)
-
-config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-config.enable_stream(rs.stream.color, 1920, 1080, rs.format.bgr8, 30)
-
-# Start streaming
-profile = pipeline.start(config)
-
-depth_sensor = profile.get_device().first_depth_sensor()
-depth_sensor.set_option(rs.option.receiver_gain, 18)
-depth_sensor.set_option(rs.option.post_processing_sharpening, 1)
-
-depth_scale = depth_sensor.get_depth_scale()
-clipping_distance_in_meters = 2.5
-clipping_distance = clipping_distance_in_meters / depth_scale
-align_to = rs.stream.color
-align = rs.align(align_to)
-
+camera = Camera()
+camera.enable_depth_camera()
+camera.enable_rgb_camera()
+camera.start_streaming()
+camera.set_depth_receiver_gain(18)
+camera.set_depth_post_processing_sharpening(1)
+camera.set_clipping_distance(2.5)
 
 coordinate_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
     size=0.5
@@ -166,18 +141,19 @@ middle_crate = o3d.io.read_point_cloud(f"{DATA_FOLDER}/Crate_2_middle_filtered.x
 middle_crate = pcd_transform_L515_data(middle_crate)
 middle_crate = do_crazy_math(middle_crate)
 """
+
 n_crate = 0
 i = 0
 try:
     poses = np.empty((0, 4))
     while True:
         # Get frameset of color and depth
-        frames = pipeline.wait_for_frames()
+        frames = camera.get_frame()
 
         # frames.get_depth_frame() is a 640x360 depth image
 
         # Align the depth frame to color frame
-        aligned_frames = align.process(frames)
+        aligned_frames = camera.align_frames(frames)
 
         # Get aligned frames
         aligned_depth_frame = (
@@ -272,7 +248,7 @@ try:
                 # Stack into an (N, 3) array: (x, y, z)
                 points_3d = np.array(
                     [
-                        rs.rs2_deproject_pixel_to_point(depth_intrinsics, [x, y], z)
+                        rs2_deproject_pixel_to_point(depth_intrinsics, [x, y], z)
                         for x, y, z in zip(x_pixels, y_pixels, nonzero_depths)
                     ]
                 )
@@ -305,6 +281,8 @@ try:
                 y = np.mean(poses[:, 1])
                 z = np.mean(poses[:, 2])
                 yaw = np.mean(poses[:, 3])
+                print(x, y, z, yaw)
+                exit()
                 controller = rtde_control.RTDEControlInterface("192.168.1.205")
                 pick_crate(x, y, z, yaw)
                 # moveToWithYaw(0, -400, 600, yaw-90)
@@ -320,6 +298,5 @@ try:
                 print("Pose difference exceeded limits, discarding values.")
 
             poses = np.empty((0, 4))
-
 finally:
-    pipeline.stop()
+    camera.stop()

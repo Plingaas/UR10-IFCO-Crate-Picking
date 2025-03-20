@@ -4,7 +4,7 @@ import numpy as np
 from time import sleep
 from helper import *
 
-controller = rtde_control.RTDEIOInterface("192.168.1.205")
+controller = rtde_control.RTDEControlInterface("192.168.1.205")
 
 
 def moveToXYZ(x, y, z, speed=0.2, acc=0.5):
