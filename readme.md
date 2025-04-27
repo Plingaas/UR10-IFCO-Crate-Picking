@@ -18,18 +18,17 @@ The system autonomously:
 - Estimates crate poses
 - Plans and executes robot pick-and-place motions
 
-## Project Structure
-
 ## Requirements
 
-# External
+### External
 
 - Python : 3.10.0
-- CUDA Toolkit : v12.5
+- CUDA Toolkit : v12.6
 
-# PIP Packages
+### PIP Packages
 
 - Ultralytics : 8.3.85
+- Torch : 2.6.0+cu126
 - Open3D : 0.19.0
 - OpenCV : 4.11.0
 - NumPy : 1.26.4
@@ -37,13 +36,5 @@ The system autonomously:
 - PyQt5 : 0.13.7
 - pyrealsense2 : 2.53.1.4623
 - ur-rtde
-
-## Setup
-
-1. Install Python requirements:
-
-```bash
-pip install -r requirements.txt
-```
 
 https://www.youtube.com/watch?v=1e_nvYarGSw
