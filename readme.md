@@ -20,13 +20,8 @@ The system autonomously:
 
 ## Requirements
 
-### External
-
 - Python : 3.10.0
 - CUDA Toolkit : v12.6
-
-### PIP Packages
-
 - Ultralytics : 8.3.85
 - Torch : 2.6.0+cu126
 - Open3D : 0.19.0
