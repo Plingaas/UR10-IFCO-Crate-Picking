@@ -19,5 +19,5 @@ if __name__ == "__main__":
                 exit()
 
     except KeyboardInterrupt:
-        print("Shutting down...")
+        print("Interrupted by user, shutting down...")
         main.shutdown()
