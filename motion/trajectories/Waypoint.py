@@ -1,12 +1,11 @@
 class Waypoint:
+    """self, pose"""
 
-    def __init__(self, pose) -> None:
+    def __init__(self, pose, spd, acc, blend) -> None:
         self.pose = pose
-        self.speed = 0
-        self.acceleration = 0
+        self.speed = spd
+        self.acceleration = acc
+        self.blend = blend
 
-    def set_speed(self, speed):
-        self.speed = speed
-
-    def set_acceleration(self, acceleration):
-        self.acceleration = acceleration
+    def to_array(self):
+        return [*self.pose, self.speed, self.acceleration, self.blend]

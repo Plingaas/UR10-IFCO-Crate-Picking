@@ -1,12 +1,18 @@
+from motion.trajectories.Move import Move
 
-"""
-rtde_control.servoJ(joint_q, velocity, acceleration, dt, lookahead_time, gain);
 
-Remember that to allow for a fast control rate when servoing, the joint positions must be close to each other e.g. (dense trajectory).
-If the robot is not reaching the target fast enough try to increase the acceleration or the gain parameter.
-"""
+class JointMove(Move):
+    """Creates a path from waypoints with blending"""
 
-class JointMove:
+    def __init__(self) -> None:
+        """Initializes a LinearMove with waypoints"""
+        super().__init__()
+        self.waypoints = []
 
-    def __init__(self, waypoints):
-        self.waypoints = waypoints
+    def add_waypoint(self, waypoint):
+        """Adds a waypoint to the path"""
+        self.waypoints.append(waypoint)
+
+    def get_moves(self):
+        """Creates a path from waypoints"""
+        return [wp.to_array() for wp in self.waypoints]
