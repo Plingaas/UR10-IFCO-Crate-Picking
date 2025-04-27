@@ -32,4 +32,6 @@ The system autonomously:
 - pyrealsense2 : 2.53.1.4623
 - ur-rtde
 
+## See the robot in action
+
 https://www.youtube.com/watch?v=1e_nvYarGSw
