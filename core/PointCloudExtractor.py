@@ -58,7 +58,7 @@ class PointCloudExtractor:
         fx = cp.float32(intrinsics.fx)
         fy = cp.float32(intrinsics.fy)
 
-        # Compute world coordinates on GPU (No Loops 🚀)
+        # Compute world coordinates on GPU
         x_world = ((x - ppx) / fx) * nonzero_depths
         y_world = ((y - ppy) / fy) * nonzero_depths
         z_world = nonzero_depths  # Depth in meters
