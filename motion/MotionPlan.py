@@ -2,15 +2,17 @@ from MotionProfile import MotionProfile
 from trajectories.JointMove import JointMove
 from trajectories.LinearMove import LinearMove
 
-class MotionPlan:
 
+class MotionPlan:
     def __init__(self) -> None:
-        self.motion_profile = MotionProfile()
+        self.allowed_moves = [LinearMove, JointMove]
+        self.speed_profile = MotionProfile()
+        self.acceleration_profile = MotionProfile()
         self.moves = []
         self.state = 0
 
     def add_move(self, move):
-        if type(move) is LinearMove or type(move) is JointMove:
+        if type(move) in self.allowed_moves:
             self.moves.append(move)
 
     def set_speed_profile(self, slow, normal, fast):
@@ -19,6 +21,8 @@ class MotionPlan:
     def set_acceleration_profile(self, slow, normal, fast):
         self.accleration_profile.set_params(slow, normal, fast)
 
-    def clear_moves(self):
-        self.moves = []
+    def get_moves(self):
+        return self.moves
 
+    def clear(self):
+        self.moves = []
