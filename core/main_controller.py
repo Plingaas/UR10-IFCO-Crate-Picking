@@ -1,6 +1,5 @@
 import cv2
 import threading
-import cupy as cp
 import open3d as o3d
 from utils.helper import draw_yolo_detections, depth_to_colormap, screenshot_o3d, print_with_time
 from core.display_grid import DisplayGrid
