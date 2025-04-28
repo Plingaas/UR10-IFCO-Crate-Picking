@@ -38,9 +38,18 @@ class PoseEstimator:
         plane_cloud = flatten_plane_cloud(plane_cloud, plane_model)
 
         if data["id"] == Crate.ID:
-            icp_transform = ICP_crate(plane_cloud)
+            return self.estimate_crate(plane_cloud)
         else:
-            icp_transform = ICP_pallet(plane_cloud)
-
+            return self.estimate_pallet(plane_cloud)
+    
+    def estimate_crate(self, plane_cloud):
+        icp_transform = ICP_crate(plane_cloud)
         pose = estimate_pose(icp_transform)
-        pose = camera_to_robot_transform(pose)
+        pose_robot_frame = camera_to_robot_transform(pose)
+        return Crate(pose_robot_frame)
+    
+    def estimate_pallet(self, plane_cloud):
+        icp_transform = ICP_pallet(plane_cloud)
+        pose = estimate_pose(icp_transform)
+        pose_robot_frame = camera_to_robot_transform(pose)
+        return Pallet(pose_robot_frame)
