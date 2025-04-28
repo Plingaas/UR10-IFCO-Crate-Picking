@@ -99,6 +99,9 @@ class RobotController(threading.Thread):
         elif type(return_move) is LinearMove:
             self.controller.moveL(moves)
 
+        if command.crate_placed_callback is not None:
+            command.crate_placed_callback()
+
         with self.lock:
             self.active = False
 
@@ -145,7 +148,7 @@ class RobotController(threading.Thread):
         self.gripper_force_open()
         self.move_to(x, y, z - 0.070, rx, ry, rz, speed="normal", acc="slow")
         self.move_down_with_force(-20)
-        self.move_to(x, y - 0.003, z - 0.050, rx, ry, rz, speed="normal", acc="slow")
+        self.move_to(x, y - 0.003, z - 0.050, rx, ry, rz, speed="normal", acc="slow") # y - 0.003 to ensure back finger engages properly.
         self.gripper_off()
         self.move_to(x, y, z + 0.050, rx, ry, rz, speed="normal", acc="normal")
 
