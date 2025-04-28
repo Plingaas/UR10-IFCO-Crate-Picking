@@ -384,7 +384,7 @@ def estimate_plane(pcd):
     return plane_model, plane_cloud
 
 
-def smooth_plane_cloud(pcd, model):
+def flatten_plane_cloud(pcd, model):
     normal = np.array([model[0], model[1], model[2]])
     rot_matrix = plane_to_rotation_matrix(normal, np.array([0, 1, 0]))
     pcd.rotate(rot_matrix, (0, 0, 0))

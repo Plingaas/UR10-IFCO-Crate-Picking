@@ -9,12 +9,12 @@ class PointCloudExtractor:
     def __init__(self) -> None:
         pass
 
-    def process(self, data, depth_frame):
+    def process(self, detections, depth_frame):
         depth_frame_gpu = cp.asarray(depth_frame)
         point_clouds = []
         with ThreadPoolExecutor() as pool:
             futures = []
-            for detection in data:
+            for detection in detections:
                 if detection["class_id"] == 1:  # Pallet
                     continue
                 mask_gpu = cp.asarray(detection["mask"])
