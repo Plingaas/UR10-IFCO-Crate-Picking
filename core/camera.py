@@ -3,16 +3,20 @@ import threading
 import numpy as np
 
 
-class L515Intrinsics:
-    def __init__(self) -> None:
-        self.width = 1920
-        self.height = 1080
-        self.ppx = 982.673
-        self.ppy = 547.614
-        self.fx = 1352.92
-        self.fy = 1354.45
-        self.model = rs.distortion.brown_conrady
-        self.coeffs = [
+
+
+
+class RealsenseL515(threading.Thread):
+
+    class Intrinsics():
+        width = 1920
+        height = 1080
+        ppx = 982.673
+        ppy = 547.614
+        fx = 1352.92
+        fy = 1354.45
+        model = rs.distortion.brown_conrady
+        coeffs = [
             0.171722,
             -0.526011,
             -0.000589736,
@@ -20,8 +24,6 @@ class L515Intrinsics:
             0.486631,
         ]
 
-
-class RealsenseL515(threading.Thread):
     def __init__(self) -> None:
         super().__init__()
         self.pipeline = rs.pipeline()

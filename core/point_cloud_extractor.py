@@ -1,7 +1,7 @@
 import cupy as cp
 import open3d as o3d
 from concurrent.futures import ThreadPoolExecutor
-from core.camera import L515Intrinsics
+from core.camera import RealsenseL515
 from utils.helper import pcd_transform_L515_data
 
 
@@ -30,7 +30,7 @@ class PointCloudExtractor:
     def extract(self, mask_gpu, depth_gpu, class_id_gpu):
         depth_gpu = cp.rot90(depth_gpu, k=-1)  # Rotate back to horizontal for masking
         x, y, nz_dep = self.mask_frame(mask_gpu, depth_gpu)
-        points = self.compute_world_points(x, y, nz_dep, L515Intrinsics())
+        points = self.compute_world_points(x, y, nz_dep)
         pcd = self.create_pc(points)
 
         data = {"pcd": pcd, "id": class_id_gpu}
@@ -51,8 +51,9 @@ class PointCloudExtractor:
 
         return x_pixels, y_pixels, nonzero_depths
 
-    def compute_world_points(self, x, y, nonzero_depths, intrinsics):
-        intrinsics = L515Intrinsics()
+    def compute_world_points(self, x, y, nonzero_depths):
+
+        intrinsics = RealsenseL515.Intrinsics
 
         ppx = cp.float32(intrinsics.ppx)
         ppy = cp.float32(intrinsics.ppy)
