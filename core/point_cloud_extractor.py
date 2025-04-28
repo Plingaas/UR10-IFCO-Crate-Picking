@@ -9,7 +9,8 @@ class PointCloudExtractor:
     def __init__(self) -> None:
         pass
 
-    def process(self, data, depth_frame_gpu):
+    def process(self, data, depth_frame):
+        depth_frame_gpu = cp.asarray(depth_frame)
         point_clouds = []
         with ThreadPoolExecutor() as pool:
             futures = []

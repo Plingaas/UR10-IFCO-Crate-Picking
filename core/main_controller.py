@@ -3,13 +3,13 @@ import threading
 import cupy as cp
 import open3d as o3d
 from utils.helper import draw_yolo_detections, depth_to_colormap, screenshot_o3d, print_with_time
-from core.DisplayGrid import DisplayGrid
-from core.Camera import RealsenseL515
-from core.YoloSegmenter import YoloSegmenter
-from core.PointCloudExtractor import PointCloudExtractor
-from core.Estimator import PoseEstimator
-from core.RobotController import RobotController
-from core.Mission import MissionPlanner, Order
+from core.display_grid import DisplayGrid
+from core.camera import RealsenseL515
+from core.yolo_segmenter import YoloSegmenter
+from core.point_cloud_extractor import PointCloudExtractor
+from core.estimator import PoseEstimator
+from core.robot_controller import RobotController
+from core.mission import MissionPlanner, Order
 
 
 class MainController:
@@ -49,62 +49,100 @@ class MainController:
         while not self.finished:
             color, depth = self.get_frames(display=False)
 
-            # Update display
-            self.grid.set_data(0, 0, color)
-            self.grid.set_data(1, 0, depth_to_colormap(depth))
-            self.grid.show()
-            cv2.waitKey(1)
+            self.update_color_image(color, render=False)
+            self.update_depth_image(depth, render=True)
 
-            with self.lock:  # Thread safety, avoid race condition with robot callback
+            # Thread safety, avoid race condition with robot callback
+            with self.lock:
                 if not self.ready_for_analyzing:
                     continue
 
             # Look for crates in the image
-            data = self.yolo.predict(color)
-            if data is None:  # Check if anything was found
+            detections = self.yolo.predict(color)
+            if detections is None:
                 continue
 
-            # Update display
-            self.grid.set_data(2, 0, draw_yolo_detections(color, data, ["Crate", "Pallet"]))
-            self.grid.show()
-            cv2.waitKey(1)
+
+            self.update_yolo_image(color, detections, render=True)
 
             # Process the yolo detections, aka extract point clouds
-            depth_gpu = cp.asarray(depth)
-            data = self.pc_processor.process(data, depth_gpu)
-
-            if data is None:  # Check if any crates were found
+            point_clouds = self.pc_processor.process(detections, depth)
+            if point_clouds is None:
                 continue
-            for pcd in data:
-                self.vis.add_geometry(pcd["pcd"])
-            image_bgr = self.screenshot_visualizer()
-            for pcd in data:
-                self.vis.remove_geometry(pcd["pcd"])
-
-            self.grid.set_data(3, 0, image_bgr)
-            self.grid.show()
+            
+            self.update_pcd_image(point_clouds, render=True)
 
             # Convert point clouds into poses of the objects found
-            objects = self.estimator.estimate_poses(data)
+            objects = self.estimator.estimate_poses(point_clouds)
+
+            if len(objects) == 0:
+                continue
 
             # Command robot to pick item
-            try:
-                crate = objects[0]
-                command = self.mission_planner.get_move_sequence(crate)
-                command.set_crate_picked_callback(self.crate_picked_callback)
-                self.robot.add_command(command)
-                self.ready_for_analyzing = False
-                print("Command sent to robot.")
+            crate = self.get_optimal_crate(objects)
+            self.send_pick_command(crate)
 
-            except Exception:
-                print("Unable to retrieve object, restarting loop.")
+    def get_optimal_crate(self, objects):
+        return objects[0]
+    
+    def send_pick_command(self, crate):
+        try:
+            command = self.mission_planner.get_move_sequence(crate)
+            command.set_crate_picked_callback(self.crate_picked_callback)
+            self.robot.add_command(command)
+            self.ready_for_analyzing = False
+            print_with_time("Main", "Command sent to robot.")
 
-    def screenshot_visualizer(self):
+        except Exception:
+            print("Unable to retrieve object, restarting loop.")
+
+    def render_visualization(self, data):
+        # Add point clouds
+        for pcd in data:
+                self.vis.add_geometry(pcd["pcd"])
+
+        # Hack to position and orient camera
         ctr = self.vis.get_view_control()
         parameters = o3d.io.read_pinhole_camera_parameters("data/screenshot_visualizer.json")
         ctr.convert_from_pinhole_camera_parameters(parameters)
+
+        # Get screenshot
         image_bgr = screenshot_o3d(self.vis)
+
+        # Remove point clouds
+        for pcd in data:
+                self.vis.remove_geometry(pcd["pcd"])
+
         return image_bgr
+
+    def update_color_image(self, color_image, render=False):
+        self.grid.set_data(0, 0, color_image)
+        if not render:
+            return
+        self.grid.show()
+        cv2.waitKey(1)
+
+    def update_depth_image(self, depth_image, render=False):
+        self.grid.set_data(1, 0, depth_to_colormap(depth_image))
+        if not render:
+            return
+        self.grid.show()
+        cv2.waitKey(1)
+
+    def update_yolo_image(self, color_image, data, render=False):
+        self.grid.set_data(2, 0, draw_yolo_detections(color_image, data, ["Crate", "Pallet"]))
+        if not render:
+            return
+        self.grid.show()
+        cv2.waitKey(1)
+
+    def update_pcd_image(self, data, render=False):
+        image_bgr = self.render_visualization(data)
+        if not render:
+            return
+        self.grid.set_data(3, 0, image_bgr)
+        self.grid.show()
+        cv2.waitKey(1)
 
     def crate_picked_callback(self):
         with self.lock:  # Thread safety
