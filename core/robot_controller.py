@@ -108,19 +108,19 @@ class RobotController(threading.Thread):
             arr[i][7] = self.acc_profile.dict[arr[i][7]]
         return arr
 
-    def moveTo(self, x, y, z, rx, ry, rz, speed="normal", acc="normal"):
+    def move_to(self, x, y, z, rx, ry, rz, speed="normal", acc="normal"):
         v = self.speed_profile.get_value(speed)
         a = self.acc_profile.get_value(acc)
         self.controller.moveL([x, y, z, rx, ry, rz], v, a)
 
-    def moveToWithYaw(self, x, y, z, yaw, speed=0.1, acc=0.1):
+    def move_to_with_yaw(self, x, y, z, yaw, speed=0.1, acc=0.1):
         rx, ry, rz = rotate_ur10(180, 0, np.deg2rad(yaw))
         self.controller.moveL([x, y, z, rx, ry, rz], speed, acc)
 
-    def setPayload(self, mass):
+    def set_payload(self, mass):
         self.controller.setPayload(mass, [0, 0, 0])
 
-    def moveDownWithForce(self, force):
+    def move_down_with_force(self, force):
         self.setPayload(1)
         tf = [0, 0, 0, 0, 0, 0]
         sv = [0, 0, 1, 0, 0, 0]
@@ -141,13 +141,13 @@ class RobotController(threading.Thread):
 
         print_with_time("Robot", f"Picking up crate at x:{x}, y:{y}, z:{z}.")
         rx, ry, rz = rotate_ur10(180, 0, np.rad2deg(yaw - np.pi / 2))
-        self.moveTo(x, y, z, rx, ry, rz, speed="fast", acc="fast")
+        self.move_to(x, y, z, rx, ry, rz, speed="fast", acc="fast")
         self.gripper_force_open()
-        self.moveTo(x, y, z - 0.070, rx, ry, rz, speed="normal", acc="slow")
-        self.moveDownWithForce(-20)
-        self.moveTo(x, y - 0.003, z - 0.050, rx, ry, rz, speed="normal", acc="slow")
+        self.move_to(x, y, z - 0.070, rx, ry, rz, speed="normal", acc="slow")
+        self.move_down_with_force(-20)
+        self.move_to(x, y - 0.003, z - 0.050, rx, ry, rz, speed="normal", acc="slow")
         self.gripper_off()
-        self.moveTo(x, y, z + 0.050, rx, ry, rz, speed="normal", acc="normal")
+        self.move_to(x, y, z + 0.050, rx, ry, rz, speed="normal", acc="normal")
 
     def place_crate(self, pose):
         x = pose[0]
@@ -163,12 +163,12 @@ class RobotController(threading.Thread):
         moves = self.replace_labels(lmove.get_moves())
         self.controller.moveL(moves)
         self.gripper_force_close()
-        self.moveDownWithForce(-50)
-        self.moveTo(x, y, z + 0.115, rx, ry, rz)
+        self.move_down_with_force(-50)
+        self.move_to(x, y, z + 0.115, rx, ry, rz)
         self.gripper_off()
 
     def go_home(self, speed="slow"):
-        self.moveTo(0.500, 0.000, 0.500, 3.141, 0.0, 0.0, speed, speed)
+        self.move_to(0.500, 0.000, 0.500, 3.141, 0.0, 0.0, speed, speed)
 
     def gripper_force_open(self):
         self.io.setStandardDigitalOut(3, False)
