@@ -4,7 +4,7 @@ from utils.helper import print_with_time
 
 
 class YoloSegmenter:
-    def __init__(self, model_path="data/best.pt", conf=0.9) -> None:
+    def __init__(self, model_path="data/yolo_crate_pallet_segmenter.pt", conf=0.9) -> None:
         super().__init__()
         self.conf = conf
         try:

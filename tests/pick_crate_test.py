@@ -1,6 +1,6 @@
-from core.RobotController import RobotController
-from core.Mission import MissionPlanner, Order
-from objects.Crate import Crate
+from core.robot_controller import RobotController
+from core.mission import MissionPlanner, Order
+from objects.crate import Crate
 import time
 
 

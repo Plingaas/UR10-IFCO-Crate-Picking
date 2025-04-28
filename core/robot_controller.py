@@ -6,10 +6,10 @@ from time import sleep
 from rtde_control import RTDEControlInterface
 from rtde_io import RTDEIOInterface
 from utils.helper import rotate_ur10, print_with_time
-from motion.MotionProfile import MotionProfile
-from motion.trajectories.LinearMove import LinearMove
-from motion.trajectories.JointMove import JointMove
-from motion.trajectories.Waypoint import Waypoint
+from motion.motion_profile import MotionProfile
+from motion.trajectories.linear_move import LinearMove
+from motion.trajectories.joint_move import JointMove
+from motion.trajectories.waypoint import Waypoint
 
 
 class RobotController(threading.Thread):

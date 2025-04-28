@@ -1,7 +1,7 @@
 import cupy as cp
 import open3d as o3d
 from concurrent.futures import ThreadPoolExecutor
-from core.Camera import L515Intrinsics
+from core.camera import L515Intrinsics
 from utils.helper import pcd_transform_L515_data
 
 

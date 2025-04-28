@@ -1,6 +1,6 @@
 import rtde_control
-from motion.trajectories.JointMove import JointMove
-from motion.trajectories.Waypoint import Waypoint
+from motion.trajectories.joint_move import JointMove
+from motion.trajectories.waypoint import Waypoint
 
 # Connect to robot
 controller = rtde_control.RTDEControlInterface("192.168.1.205")

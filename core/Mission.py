@@ -1,9 +1,9 @@
 import numpy as np
 import time
-from motion.trajectories.JointMove import JointMove
-from motion.trajectories.LinearMove import LinearMove
-from motion.trajectories.Waypoint import Waypoint
-from core.Command import Command
+from motion.trajectories.joint_move import JointMove
+from motion.trajectories.linear_move import LinearMove
+from motion.trajectories.waypoint import Waypoint
+from core.command import Command
 from utils.helper import print_with_time
 
 """ Class for any item """

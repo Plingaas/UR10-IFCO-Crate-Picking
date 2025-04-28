@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
-from objects.Crate import Crate
-from objects.Pallet import Pallet
+from objects.crate import Crate
+from objects.pallet import Pallet
 from utils.helper import (
     pcd_remove_outliers,
     camera_to_robot_transform,
@@ -8,7 +8,7 @@ from utils.helper import (
     smooth_plane_cloud,
     ICP_crate,
     ICP_pallet,
-    estimate_pose,
+    estimate_pose
 )
 
 
