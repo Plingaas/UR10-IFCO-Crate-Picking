@@ -1,4 +1,4 @@
-# License
+GPL-3.0 + NC Exception
 
 Copyright (c) 2025 Peter Lingås
 
