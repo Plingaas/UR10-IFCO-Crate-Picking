@@ -22,15 +22,16 @@ The system autonomously:
 
 - Python : 3.10.0
 - CUDA Toolkit : v12.6
-- Ultralytics : 8.3.85
-- Torch : 2.6.0+cu126
-- Open3D : 0.19.0
+- Ultralytics : ultralytics==8.3.85
+- Torch : CUDA version 12.6 https://pytorch.org/get-started/locally/
+- Open3D : open3d==0.19.0
 - OpenCV : 4.11.0
-- NumPy : 1.26.4
-- CuPy : 13.4.0
-- PyQt5 : 0.13.7
-- pyrealsense2 : 2.53.1.4623
-- ur-rtde
+- NumPy : numpy==1.26.4
+- CuPy : cupy-cuda12x==13.4.0
+- PyQt5 : PyQt==0.13.7
+- pyqtgraph : pyqtgraph==0.13.7
+- pyrealsense2 : pyrealsense2==2.53.1.4623
+- ur-rtde : ur-rtde==1.6.0
 
 ## See the robot in action
 

@@ -6,7 +6,8 @@ import cv2
 import pyrealsense2 as rs
 import cupy as cp
 import time
-
+print(cp.__name__)
+exit()
 DATA_FOLDER = "data"
 
 
@@ -401,7 +402,6 @@ def ICP_crate(pcd):
 
 def ICP_pallet(pcd):
     return ICP(pcd, EUROPALLET_FRONT_PCD)
-
 
 def ICP(pcd, target_pcd):
     # Perform ICP with rigid transformation (translation and rotation)
