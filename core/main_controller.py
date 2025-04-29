@@ -34,7 +34,7 @@ class MainController:
         self.robot.go_home(speed="normal")
 
         # Processing objects
-        self.yolo = YoloSegmenter("best.pt", conf=0.8)
+        self.yolo = YoloSegmenter("data/best.pt", conf=0.8)
         self.pc_processor = PointCloudExtractor()
         self.estimator = PoseEstimator()
 
