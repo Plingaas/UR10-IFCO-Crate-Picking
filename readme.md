@@ -20,14 +20,16 @@ The system autonomously:
 
 ## Requirements
 
+- Python : 3.10.0
+- CUDA Toolkit : v12.x
+- Torch : Torch + cuda 12.x https://pytorch.org/get-started/locally/
+
 All core dependencies are listed in `requirements.txt`. To install them:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-- Python : 3.10.0
-- CUDA Toolkit : v12.6
 - Ultralytics : ultralytics==8.3.85
 - Open3D : open3d==0.19.0
 - OpenCV : opencv-python==4.11.0.86
