@@ -1,4 +1,4 @@
-from motion.trajectories.Move import Move
+from motion.trajectories.move import Move
 
 
 class JointMove(Move):

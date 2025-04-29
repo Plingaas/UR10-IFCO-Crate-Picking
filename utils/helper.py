@@ -6,8 +6,6 @@ import cv2
 import pyrealsense2 as rs
 import cupy as cp
 import time
-print(cp.__name__)
-exit()
 DATA_FOLDER = "data"
 
 

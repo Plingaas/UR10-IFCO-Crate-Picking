@@ -11,7 +11,6 @@ from motion.trajectories.linear_move import LinearMove
 from motion.trajectories.joint_move import JointMove
 from motion.trajectories.waypoint import Waypoint
 
-
 class RobotController(threading.Thread):
     def __init__(self, ip="192.168.1.205") -> None:
         super().__init__()

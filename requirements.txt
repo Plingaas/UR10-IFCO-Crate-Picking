@@ -1,0 +1,9 @@
+ultralytics==8.3.85
+open3d==0.19.0
+opencv-python==4.11.0
+numpy==1.26.4
+cupy-cuda12x==13.4.0
+PyQt5==5.15.11
+pyqtgraph==0.13.7
+pyrealsense2==2.53.1.4623
+ur-rtde==1.6.0

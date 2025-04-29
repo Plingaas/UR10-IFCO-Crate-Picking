@@ -1,6 +1,6 @@
 import time
 from utils.helper import print_with_time
-from core.MainController import MainController
+from core.main_controller import MainController
 
 if __name__ == "__main__":
     main = MainController()
