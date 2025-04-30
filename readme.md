@@ -1,6 +1,6 @@
-# UR10 IFCO Crate Picking
+# Automated IFCO Crate Picking
 
-Autonomous robotic system for picking IFCO crates using a UR10 robot, developed for Solwr.
+Automatic robotic system for picking IFCO crates using a UR10 robot, developed for Solwr.
 
 ## Overview
 
