@@ -9,7 +9,7 @@ class FT300Reader(threading.Thread):
         super().__init__()
         self.daemon = True
         self.running = True
-        self.ser = serial.Serial("COM5", 19200)
+        self.ser = serial.Serial("COM5", 19200, timeout=0.01)
         self.new_data_callback = None
         self.start()
     
@@ -26,7 +26,7 @@ class FT300Reader(threading.Thread):
                 continue
 
             wrench = self.unpack(data)
-            if self.new_data_callback is not None:
+            if self.new_data_callback:
                 self.new_data_callback(wrench)
 
 

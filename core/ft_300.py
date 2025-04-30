@@ -63,6 +63,14 @@ class FT300:
             self.new_data = False
             return self.wrench.flatten()
 
+    def get_unread_wrench(self):
+        while True:
+            with self.lock:
+                if self.new_data:
+                    self.new_data = False
+                    return self.wrench
+            time.sleep(0.001)
+    
     def estimate_weight(self, n=10):
         print_with_time("FT300", "Estimating item weight...")
         est_weight = 0

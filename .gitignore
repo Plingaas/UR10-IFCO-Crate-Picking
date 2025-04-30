@@ -4,3 +4,4 @@ devfolder/__pycache__
 .ruff_cache
 .mypy_cache
 pyproject.toml
+nndata

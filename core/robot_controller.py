@@ -3,6 +3,7 @@ from concurrent.futures import Future
 import queue
 import numpy as np
 from time import sleep
+from rtde_receive import RTDEReceiveInterface
 from rtde_control import RTDEControlInterface
 from rtde_io import RTDEIOInterface
 from utils.helper import rotate_ur10, print_with_time
@@ -11,6 +12,7 @@ from motion.trajectories.linear_move import LinearMove
 from motion.trajectories.joint_move import JointMove
 from motion.trajectories.waypoint import Waypoint
 from core.ft_300 import FT300
+from core.stacking_classifier import StackingClassifier
 
 class RobotController(threading.Thread):
     def __init__(self, ip="192.168.1.205") -> None:
@@ -26,6 +28,9 @@ class RobotController(threading.Thread):
 
         # Start FT Sensor
         self.ft = FT300()
+
+        # Load Stacking Classifier
+        self.stacking_classifier = StackingClassifier()
 
     def connect(self, ip):
         self.controller = RTDEControlInterface(ip)
@@ -98,8 +103,6 @@ class RobotController(threading.Thread):
         if command.crate_picked_callback is not None:
             command.crate_picked_callback()
 
-        
-
         self.place_crate(place_pose)
 
         moves = self.replace_labels(return_move.get_moves())  # Convert 'fast' etc to numbers
@@ -141,7 +144,7 @@ class RobotController(threading.Thread):
 
         current_force = self.ft.get_wrench()[2]
 
-        while abs(force - current_force) > 10: # Within 1N to verify weight
+        for i in range(50): # Within 10N to verify weight (removed currently)
             t = self.controller.initPeriod()
             self.controller.forceMode(tf, sv, wrench, 2, limits)
             self.controller.waitPeriod(t)
@@ -181,9 +184,39 @@ class RobotController(threading.Thread):
         moves = self.replace_labels(lmove.get_moves())
         self.controller.moveL(moves)
         self.gripper_force_close()
+        
         self.move_down_with_force(-50)
+        ''' NEEDS MORE DEVELOPMENT
+        print_with_time("Robot", "Attempting to place crate.")
+        placed = False
+        while not placed:
+            placed = self.attempt_placement()
+            print_with_time("Robot", f"Attempted to place crate. Result: {placed}")
+            if not placed:
+                self.gripper_force_open()
+                self.move_to(x, y, z + 0.035, rx, ry, rz, "slow", "slow")
+                self.gripper_off()
+        '''
+
         self.move_to(x, y, z + 0.115, rx, ry, rz)
         self.gripper_off()
+
+    def attempt_placement(self):
+        self.move_down_with_force(-50)
+        move_thread = threading.Thread(target=self.move_down_with_force, args=[-50])
+        move_thread.start()
+        data = [] # Position of lower crate
+        #other_crate_pos = [x, y, z-207.5]
+        for i in range(50):
+            #pose = np.array(receiver.getActualTCPPose()).flatten()
+            force = self.ft.get_unread_wrench().flatten()
+            #combined = np.concatenate([other_crate_pos, pose, force])  # shape: (15,)
+            data.append(force)
+
+        data = np.array(data)
+        is_placed = self.stacking_classifier.predict(data)
+        return is_placed
+        
 
     def go_home(self, speed="slow"):
         self.move_to(0.500, 0.000, 0.500, 3.141, 0.0, 0.0, speed, speed)

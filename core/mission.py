@@ -122,7 +122,7 @@ class MissionPlanner:
         return jmove
 
     def get_place_pose(self):
-        i = self.order.picked
+        i = self.order.picked + 4
         x = -0.311
         y = 0.992
         z = 0.285 + 0.205 * (int(i / 4))

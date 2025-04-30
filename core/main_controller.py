@@ -8,7 +8,7 @@ from core.yolo_segmenter import YoloSegmenter
 from core.point_cloud_extractor import PointCloudExtractor
 from core.estimator import PoseEstimator
 from core.robot_controller import RobotController
-from core.mission import MissionPlanner, Order, Item
+from core.mission import MissionPlanner, Order
 
 class MainController:
     def __init__(self) -> None:
