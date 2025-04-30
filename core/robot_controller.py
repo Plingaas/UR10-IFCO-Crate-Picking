@@ -10,6 +10,7 @@ from motion.motion_profile import MotionProfile
 from motion.trajectories.linear_move import LinearMove
 from motion.trajectories.joint_move import JointMove
 from motion.trajectories.waypoint import Waypoint
+from core.ft_300 import FT300
 
 class RobotController(threading.Thread):
     def __init__(self, ip="192.168.1.205") -> None:
@@ -17,11 +18,14 @@ class RobotController(threading.Thread):
         self.lock = threading.Lock()
         self.command_queue = queue.Queue()
         self.task_queue = queue.Queue()
-        self.speed_profile = MotionProfile(slow=0.1, normal=0.7, fast=1.5)
-        self.acc_profile = MotionProfile(slow=0.1, normal=0.5, fast=1.0)
+        self.speed_profile = MotionProfile(slow=0.1, normal=0.7, fast=0.7)
+        self.acc_profile = MotionProfile(slow=0.1, normal=0.5, fast=0.5)
         self.running = True
         self.daemon = True
         self.active = False
+
+        # Start FT Sensor
+        self.ft = FT300()
 
     def connect(self, ip):
         self.controller = RTDEControlInterface(ip)
@@ -66,6 +70,9 @@ class RobotController(threading.Thread):
         with self.lock:
             self.command_queue.put(command)
 
+    def calibrate_fts(self):
+        self.ft.calibrate()
+
     # === Robot actions ===
 
     def run_command(self, command):
@@ -78,6 +85,7 @@ class RobotController(threading.Thread):
 
         # Pick up crate
         self.pick_crate(pick_pose)
+        self.ft.estimate_weight(n=250)
 
         # Get ready for placing
         moves = self.replace_labels(approach_move.get_moves())  # Convert 'fast' etc to numbers
@@ -89,6 +97,8 @@ class RobotController(threading.Thread):
         # Crate is picked from pallet an should be out of frame.
         if command.crate_picked_callback is not None:
             command.crate_picked_callback()
+
+        
 
         self.place_crate(place_pose)
 
@@ -103,7 +113,7 @@ class RobotController(threading.Thread):
 
         with self.lock:
             self.active = False
-
+            
     def replace_labels(self, arr):
         for i, _ in enumerate(arr):
             arr[i][6] = self.speed_profile.dict[arr[i][6]]
@@ -123,17 +133,23 @@ class RobotController(threading.Thread):
         self.controller.setPayload(mass, [0, 0, 0])
 
     def move_down_with_force(self, force):
-        self.setPayload(1)
+        self.set_payload(1)
         tf = [0, 0, 0, 0, 0, 0]
         sv = [0, 0, 1, 0, 0, 0]
         wrench = [0, 0, force, 0, 0, 0]
         limits = [2, 2, 1.5, 1, 1, 1]
-        for _ in range(50):
+
+        current_force = self.ft.get_wrench()[2]
+
+        while abs(force - current_force) > 10: # Within 1N to verify weight
             t = self.controller.initPeriod()
             self.controller.forceMode(tf, sv, wrench, 2, limits)
             self.controller.waitPeriod(t)
+
+            current_force = self.ft.get_wrench()[2]
+
         self.controller.forceModeStop()
-        self.setPayload(8)
+        self.set_payload(8)
 
     def pick_crate(self, pose):
         x = pose[0]
@@ -141,7 +157,7 @@ class RobotController(threading.Thread):
         z = pose[2]
         yaw = pose[3]
 
-        print_with_time("Robot", f"Picking up crate at x:{x}, y:{y}, z:{z}.")
+        print_with_time("Robot", f"Picking up crate at x:{round(x, 2)}, y:{round(y, 2)}, z:{round(z,2)}.")
         rx, ry, rz = rotate_ur10(180, 0, np.rad2deg(yaw - np.pi / 2))
         self.move_to(x, y, z, rx, ry, rz, speed="fast", acc="fast")
         self.gripper_force_open()
@@ -157,7 +173,7 @@ class RobotController(threading.Thread):
         z = pose[2]
         yaw = pose[3]
 
-        print_with_time("Robot", f"Placing crate at x:{x}, y:{y}, z:{z}.")
+        print_with_time("Robot", f"Placing crate at x:{round(x,2)}, y:{round(y,2)}, z:{round(z,2)}.")
         rx, ry, rz = rotate_ur10(180, 0, np.rad2deg(yaw))
         lmove = LinearMove()
         lmove.add_waypoint(Waypoint([x, y, z + 0.115, rx, ry, rz], "fast", "normal", 0.1))

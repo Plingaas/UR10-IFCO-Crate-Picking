@@ -2,15 +2,18 @@ import numpy as np
 from PyQt5 import QtWidgets, QtCore
 import pyqtgraph as pg
 from core.ft300_reader import FT300Reader
+import threading
+from utils.low_pass_filter import LowPassFilter
 
 class ForceTorquePlotter(QtWidgets.QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.init_ui()
         self.reader = FT300Reader()
+        self.reader.new_data_callback = self.update_plots
         self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.update_plots)
-        self.timer.start(1)  # Update every 30 ms
+        self.lock = threading.Lock()
+        self.filter = LowPassFilter(100.0, 5.0)
 
     def init_ui(self):
         self.setWindowTitle("Force & Torque Live Plotter")
@@ -42,16 +45,12 @@ class ForceTorquePlotter(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
-    def update_plots(self):
-        # Always take the latest wrench data, discard old
-        latest_wrench = None
-        while not self.reader.queue.empty():
-            latest_wrench = self.reader.queue.get()
-
-        if latest_wrench:
-            for i in range(6):
+    def update_plots(self, data):
+        with self.lock:
+            data = self.filter.filter(data)
+            for i, value in enumerate(data):
                 self.data[i][:-1] = self.data[i][1:]
-                self.data[i][-1] = latest_wrench[i]
+                self.data[i][-1] = value
                 self.curves[i].setData(self.data[i])
 
     def closeEvent(self, event):

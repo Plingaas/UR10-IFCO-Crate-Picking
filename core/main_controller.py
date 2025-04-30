@@ -2,14 +2,13 @@ import cv2
 import threading
 import open3d as o3d
 from utils.helper import draw_yolo_detections, depth_to_colormap, screenshot_o3d, print_with_time
-from core.display_grid import DisplayGrid
+from utils.display_grid import DisplayGrid
 from core.camera import RealsenseL515
 from core.yolo_segmenter import YoloSegmenter
 from core.point_cloud_extractor import PointCloudExtractor
 from core.estimator import PoseEstimator
 from core.robot_controller import RobotController
-from core.mission import MissionPlanner, Order
-
+from core.mission import MissionPlanner, Order, Item
 
 class MainController:
     def __init__(self) -> None:
@@ -32,9 +31,10 @@ class MainController:
         self.robot = RobotController()
         self.robot.connect("192.168.1.205")
         self.robot.go_home(speed="normal")
+        self.robot.calibrate_fts()
 
         # Processing objects
-        self.yolo = YoloSegmenter("data/best.pt", conf=0.8)
+        self.yolo = YoloSegmenter(conf=0.8)
         self.pc_processor = PointCloudExtractor()
         self.estimator = PoseEstimator()
 
@@ -47,10 +47,8 @@ class MainController:
     def loop(self):
         while not self.finished:
             color, depth = self.get_frames(display=False)
-
             self.update_color_image(color, render=False)
             self.update_depth_image(depth, render=True)
-
             # Thread safety, avoid race condition with robot callback
             with self.lock:
                 if not self.ready_for_analyzing:
@@ -60,15 +58,12 @@ class MainController:
             detections = self.yolo.predict(color)
             if detections is None:
                 continue
-
-
             self.update_yolo_image(color, detections, render=True)
 
             # Process the yolo detections, aka extract point clouds
             point_clouds = self.pc_processor.process(detections, depth)
             if point_clouds is None:
                 continue
-            
             self.update_pcd_image(point_clouds, render=True)
 
             # Convert point clouds into poses of the objects found
@@ -79,15 +74,17 @@ class MainController:
 
             # Command robot to pick item
             crate = self.get_optimal_crate(objects)
-            self.send_pick_command(crate)
+            weight = self.customer_order.get_current_item_weight()
+            self.send_pick_command(crate, weight)
 
     def get_optimal_crate(self, objects):
         return objects[0]
     
-    def send_pick_command(self, crate):
+    def send_pick_command(self, crate, weight):
         try:
             command = self.mission_planner.get_move_sequence(crate)
             command.set_crate_picked_callback(self.crate_picked_callback)
+            command.set_item_weight(weight)
             self.robot.add_command(command)
             self.ready_for_analyzing = False
             print_with_time("Main", "Command sent to robot.")

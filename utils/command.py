@@ -6,6 +6,7 @@ class Command:
         self.return_move = None
         self.crate_picked_callback = None
         self.crate_placed_callback = None
+        self.item_weight = None
 
     def set_pick_move(self, move):
         self.pick_move = move
@@ -24,3 +25,8 @@ class Command:
 
     def set_crate_placed_callback(self, func):
         self.crate_placed_callback = func
+
+    def set_item_weight(self, weight):
+        if weight < 0:
+            return
+        self.item_weight = weight

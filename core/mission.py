@@ -3,7 +3,7 @@ import time
 from motion.trajectories.joint_move import JointMove
 from motion.trajectories.linear_move import LinearMove
 from motion.trajectories.waypoint import Waypoint
-from core.command import Command
+from utils.command import Command
 from utils.helper import print_with_time
 
 """ Class for any item """
@@ -14,6 +14,15 @@ class Item:
         self.name = name
         self.size = {"w": size[0], "l": size[1], "h": size[2]}
         self.weight = weight
+
+    def get_name(self):
+        return self.name
+
+    def get_size(self):
+        return self.size
+    
+    def get_weight(self):
+        return self.weight
 
 
 """ Class for creating a customer order with an item list """
@@ -28,13 +37,12 @@ class Order:
         @staticmethod
         def fetch_latest_order():  # Dummy order  # noqa: ANN205
             print_with_time("Order", "Fetching customer order.")
-            time.sleep(0.5)  # Simulate fetching time
             order = Order()
             ifco_crate_6420 = Item("IFCO_BLL6420", size=[0.36, 0.59, 0.216], weight=1.830)
-            order.add_item(ifco_crate_6420, n=8)
+            order.add_item(ifco_crate_6420, n=2)
             print_with_time("Order", "Customer order fetched.")
             print_with_time("Order", "vvvvvvvvvvvvvvvv Order vvvvvvvvvvvvvvvv")
-            print_with_time("Item", "IFCO Crate BLL6420 (8pcs)")
+            print_with_time("Item", f"{ifco_crate_6420.get_name()} ({order.get_item_count()}pcs)")
             print_with_time("Order", "^^^^^^^^^^^^^^^^ Order ^^^^^^^^^^^^^^^^")
             return order
 
@@ -46,26 +54,29 @@ class Order:
         for i in range(n):
             self.items.append(item)
 
-    def get_size(self):
+    def get_item_count(self):
         return len(self.items)
 
     def get_item_at(self, index):
         return self.items[index]
 
     def get_remaining_picks(self):
-        return self.get_size() - self.picked
+        return self.get_item_count() - self.picked
 
     def is_finished(self):
-        return self.picked == self.get_size()
+        return self.get_remaining_picks() == 0
 
     def update_picked(self):
         self.picked += 1
 
-    def get_next_item(self, n=-1):
+    def get_item(self, n=-1):
         if self.is_finished():
             return None
         n = self.picked if n == -1 else n  # Default value = self.picked
         return self.get_item_at(self.picked)
+    
+    def get_current_item_weight(self):
+        return self.items[self.picked].get_weight()
 
 
 class MissionPlanner:
@@ -74,8 +85,7 @@ class MissionPlanner:
 
     def update_items_picked(self):
         self.order.update_picked()
-        remaining = self.order.get_remaining_picks()
-        print_with_time("MissionPlanner", f"Picked {self.order.picked}/{remaining} items.")
+        print_with_time("MissionPlanner", f"Picked {self.order.picked}/{self.order.get_item_count()} items.")
         return self.order.get_remaining_picks()
 
     def is_order_finished(self):

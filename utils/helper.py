@@ -59,7 +59,7 @@ def draw_yolo_detections(frame, detections, class_names, mask_alpha=0.4):
 
 
 def print_with_time(owner, msg):
-    print(f"[{time.time()}] ({owner}) {msg}")
+    print(f"[INFO] [{time.time()}] ({owner}) {msg}")
 
 
 def screenshot_o3d(vis):
@@ -71,7 +71,6 @@ def screenshot_o3d(vis):
     end_x = start_x + int(w * 0.43)
     image_bgr = image_bgr[:, start_x:end_x]
     return image_bgr
-
 
 def get_L515_intrinsics():
     depth_intrinsics = rs.intrinsics()
