@@ -14,9 +14,10 @@ This project implements a full pipeline for detecting, localizing, and picking I
 
 The system autonomously:
 
-- Detects crates in RGBD images
+- Detects crates in RGB images with YOLO
 - Estimates crate poses
 - Plans and executes robot pick-and-place motions
+- Verifies stacking with ML
 
 ## Requirements
 
