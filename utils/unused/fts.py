@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import QtWidgets
 import pyqtgraph as pg
-from utils.ft_plotter import ForceTorquePlotter
+from utils.unused.ft_plotter import ForceTorquePlotter
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
