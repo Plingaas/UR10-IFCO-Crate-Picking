@@ -1,7 +1,7 @@
 import numpy as np
 from PyQt5 import QtWidgets, QtCore
 import pyqtgraph as pg
-from core.ft300_reader import FT300Reader
+from utils.ft300_reader import FT300Reader
 import threading
 from utils.low_pass_filter import LowPassFilter
 

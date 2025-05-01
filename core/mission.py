@@ -79,13 +79,13 @@ class Order:
         return self.items[self.picked].get_weight()
 
 
-class MissionPlanner:
+class MotionPlanner:
     def __init__(self, order) -> None:
         self.order = order
 
     def update_items_picked(self):
         self.order.update_picked()
-        print_with_time("MissionPlanner", f"Picked {self.order.picked}/{self.order.get_item_count()} items.")
+        print_with_time("MotionPlanner", f"Picked {self.order.picked}/{self.order.get_item_count()} items.")
         return self.order.get_remaining_picks()
 
     def is_order_finished(self):

@@ -1,6 +1,6 @@
-from MotionProfile import MotionProfile
-from trajectories.JointMove import JointMove
-from trajectories.LinearMove import LinearMove
+from motion.motion_profile import MotionProfile
+from motion.trajectories.joint_move import JointMove
+from motion.trajectories.linear_move import LinearMove
 
 
 class MotionPlan:
