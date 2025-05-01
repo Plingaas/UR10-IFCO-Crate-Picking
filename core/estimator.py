@@ -61,7 +61,7 @@ class PoseEstimator:
     def extract_pose(self, transform):
         inv_transform = np.linalg.inv(transform)
 
-        zero_point = np.append((0, 0, 0), 1)  # (x, y, z, 1)
+        zero_point = np.array((0,0,0,0))
         pose = inv_transform @ zero_point
         pose[0] *= -1
 

@@ -407,7 +407,7 @@ def ICP(pcd, target_pcd):
 
     icp_result = o3d.pipelines.registration.registration_icp(
         pcd,
-        CRATE_FRONT_PCD,
+        target_pcd,
         threshold,
         trans_init,
         o3d.pipelines.registration.TransformationEstimationPointToPlane(),  # More accurate
