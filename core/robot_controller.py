@@ -144,7 +144,7 @@ class RobotController(threading.Thread):
 
         current_force = self.ft.get_wrench()[2]
 
-        for i in range(50): # Within 10N to verify weight (removed currently)
+        while abs(force) - abs(current_force) > 10: # Within 10N to verify weight (removed currently)
             t = self.controller.initPeriod()
             self.controller.forceMode(tf, sv, wrench, 2, limits)
             self.controller.waitPeriod(t)
