@@ -415,16 +415,3 @@ def ICP(pcd, target_pcd):
     )
     return icp_result.transformation
 
-
-def estimate_pose(transform):
-    inv_transform = np.linalg.inv(transform)
-
-    zero_point = np.append((0, 0, 0), 1)  # (x, y, z, 1)
-    pose = inv_transform @ zero_point
-    pose[0] *= -1
-
-    rot = transform[:3, :3]
-    rot_vec, _ = cv2.Rodrigues(rot)
-    pose[3] = rot_vec[2][0]
-
-    return pose

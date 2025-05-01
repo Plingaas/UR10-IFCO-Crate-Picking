@@ -1,4 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
+import numpy as np
+import cv2
 from objects.crate import Crate
 from objects.pallet import Pallet
 from utils.helper import (
@@ -7,12 +9,13 @@ from utils.helper import (
     estimate_plane,
     flatten_plane_cloud,
     ICP_crate,
-    ICP_pallet,
-    estimate_pose
+    ICP_pallet
 )
 
 
 class PoseEstimator:
+
+
     def __init__(self) -> None:
         pass
 
@@ -42,14 +45,28 @@ class PoseEstimator:
         else:
             return self.estimate_pallet(plane_cloud)
     
+    
     def estimate_crate(self, plane_cloud):
         icp_transform = ICP_crate(plane_cloud)
-        pose = estimate_pose(icp_transform)
+        pose = self.extract_pose(icp_transform)
         pose_robot_frame = camera_to_robot_transform(pose)
         return Crate(pose_robot_frame)
     
     def estimate_pallet(self, plane_cloud):
         icp_transform = ICP_pallet(plane_cloud)
-        pose = estimate_pose(icp_transform)
+        pose = self.extract_pose(icp_transform)
         pose_robot_frame = camera_to_robot_transform(pose)
         return Pallet(pose_robot_frame)
+    
+    def extract_pose(self, transform):
+        inv_transform = np.linalg.inv(transform)
+
+        zero_point = np.append((0, 0, 0), 1)  # (x, y, z, 1)
+        pose = inv_transform @ zero_point
+        pose[0] *= -1
+
+        rot = transform[:3, :3]
+        rot_vec, _ = cv2.Rodrigues(rot)
+        pose[3] = rot_vec[2][0]
+
+        return pose
