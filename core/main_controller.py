@@ -8,7 +8,7 @@ from core.yolo_segmenter import YoloSegmenter
 from core.point_cloud_extractor import PointCloudExtractor
 from core.estimator import PoseEstimator
 from core.robot_controller import RobotController
-from core.mission import MotionPlanner, Order
+from core.mission import MissionPlanner, Order
 
 class MainController:
     def __init__(self) -> None:
@@ -19,7 +19,7 @@ class MainController:
     def setup(self):
         # Fetch order from dummy api
         self.customer_order = Order.API.fetch_latest_order()
-        self.mission_planner = MotionPlanner(order=self.customer_order)
+        self.mission_planner = MissionPlanner(order=self.customer_order)
 
         # Start camera thread
         print_with_time("Main", "Configuring Realsense L515.")
