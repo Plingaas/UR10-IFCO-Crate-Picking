@@ -9,7 +9,7 @@ full_array = data[array_key]      # Shape: (N, 15)
 # Last crate position
 x = full_array[:, 0]
 y = full_array[:, 1]
-z = full_array[:, 2] + 207.5
+z = full_array[:, 2] + 207.5 - 0.043
 
 # Robot TCP
 x_tcp = full_array[:, 3]
@@ -29,12 +29,12 @@ tx = full_array[:, 12]
 ty = full_array[:, 13]
 tz = full_array[:, 14]
 
-labels_force = ['fx', 'fy', 'fz']
+labels_force = ['fx', 'fy', 'fz', "z"]
 labels_torque = ['tx', 'ty', 'tz', "Z-position"]
-force_limits = [(-20, 20), (-20, 20), (-100, 20)]
+force_limits = [(-20, 20), (-20, 20), (-100, 20), (0.46, 0.54)]
 torque_limits = [(-2.5, 2.5), (-2.5, 2.5), (-2.5, 2.5), (0.46, 0.54)]
 
-forces = [fx, fy, fz]
+forces = [fx, fy, fz, z]
 torques = [tx, ty, tz, z_tcp]
 
 # Plot in 2x3 layout
@@ -42,7 +42,7 @@ fig, axs = plt.subplots(2, 4, figsize=(12, 6))
 fig.suptitle('FAIL')
 
 # Top row: forces
-for i in range(3):
+for i in range(4):
     axs[0, i].plot(forces[i])
     axs[0, i].set_title(labels_force[i])
     axs[0, i].set_ylabel('Force (N)')

@@ -17,7 +17,7 @@ class FT300:
         self.filter = LowPassFilter(100.0, 5.0, values=6)
         self.lock = threading.Lock()
 
-        self.offsets = np.zeros((6, 1))
+        self.biases = np.zeros((6, 1))
 
         self.calibrating = False
         self.future_cal = None
@@ -30,7 +30,7 @@ class FT300:
     def update_data(self, data):
         with self.lock:
             if not self.calibrating:
-                self.wrench = self.filter.filter(data) - self.offsets
+                self.wrench = self.filter.filter(data) - self.biases
                 self.new_data = True
                 return
         
@@ -39,7 +39,7 @@ class FT300:
                 self.measurements[self.cal_index] = data
                 self.cal_index += 1
             else:
-                self.offsets = np.mean(self.measurements, axis = 0)
+                self.biases = np.mean(self.measurements, axis = 0)
                 self.calibrating = False
                 self.future_cal.set_result(True)
 
@@ -50,12 +50,12 @@ class FT300:
             self.calibrating = True
         self.future_cal.result()
         print_with_time("FT300", f"Finished calibrating (\n\
-                                    f_x: {self.offsets[0][0]}, \n\
-                                    f_y: {self.offsets[1][0]}, \n\
-                                    f_z: {self.offsets[2][0]}, \n\
-                                    t_x: {self.offsets[3][0]}, \n\
-                                    t_y: {self.offsets[4][0]}, \n\
-                                    t_z: {self.offsets[5][0]}, \n\
+                                    f_x: {self.biases[0][0]}, \n\
+                                    f_y: {self.biases[1][0]}, \n\
+                                    f_z: {self.biases[2][0]}, \n\
+                                    t_x: {self.biases[3][0]}, \n\
+                                    t_y: {self.biases[4][0]}, \n\
+                                    t_z: {self.biases[5][0]}, \n\
                                 )")
 
     def get_wrench(self):

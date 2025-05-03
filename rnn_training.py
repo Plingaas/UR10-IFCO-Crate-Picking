@@ -18,11 +18,16 @@ def load_sequence_from_npz(path: str, label: int) -> tuple[torch.Tensor, torch.T
     if arr.shape != (50, 15):
         raise ValueError(f"Expected (50, 15), got {arr.shape}")
 
+    # Extract previous crate position
+    crate_z_data = arr[:, 2].reshape((50,1)) + 207.5 - 0.2075 - 0.0438
+    tcp_z_data = arr[:, 5].reshape((50,1))
+
     # Extract last 6 columns (Fx, Fy, Fz, Tx, Ty, Tz)
-    wrench_data = arr[:, 9:]  # shape: (50, 6)
+    wrench_data =  arr[:, 9:]  # shape: (50, 6)
     
+    data = np.hstack((crate_z_data, tcp_z_data, wrench_data))
     # Convert to PyTorch tensor, add batch dim
-    X_tensor = torch.tensor(wrench_data, dtype=torch.float32).unsqueeze(0)  # shape: (1, 50, 6)
+    X_tensor = torch.tensor(data, dtype=torch.float32).unsqueeze(0)  # shape: (1, 50, 6)
     y_tensor = torch.tensor([[label]], dtype=torch.float32)                # shape: (1, 1)
 
     return X_tensor, y_tensor
@@ -63,7 +68,7 @@ def load_dataset_from_folder(folder: str, id: str = "") -> tuple[torch.Tensor, t
 
 # Parameters
 sequence_length = 50  # e.g. 100 timesteps per motion
-input_size = 6         # fx, fy, fz, tx, ty, tz
+input_size = 8         # fx, fy, fz, tx, ty, tz
 hidden_size = 32
 num_layers = 1
 
@@ -94,13 +99,13 @@ class MotionClassifier(nn.Module):
     def forward(self, x):
         _, (hn, _) = self.lstm(x)   # Only keep the final hidden state
         x = self.fc(hn[-1])         # Use the last layer's hidden state
-        return x
+        return self.sigmoid(x)
 
 model = MotionClassifier()
 model.to("cuda")
 
 # Training setup
-criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([2]).to("cuda"))
+criterion = nn.BCELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Training loop
@@ -117,7 +122,7 @@ test_sequence = torch.randn(1, sequence_length, input_size).to("cuda")
 
 # Evaluation
 model.eval()
-conf = 0.8
+conf = 0.9
 with torch.no_grad():
     test_outputs = model(X_test)
     predictions = (test_outputs > conf).float()
@@ -151,4 +156,4 @@ print(f"Accuracy: {accuracy:.2%}")
 print(f"Precision: {precision:.2%}")
 print(f"Recall: {recall:.2%}")
 print(f"F1 Score: {f1:.2%}")
-torch.save(model.state_dict(), "placement_verifier3.pt")
+torch.save(model.state_dict(), "placement_verifier4.pt")
