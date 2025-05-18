@@ -7,13 +7,9 @@ import os
 import re
 
 def load_sequence_from_npz(path: str, label: int) -> tuple[torch.Tensor, torch.Tensor]:
-    """
-    Loads an .npz file with shape (50, 15), extracts last 6 columns,
-    and returns a (1, 50, 6) tensor and a label tensor (1, 1).
-    """
     data = np.load(path)
-    key = data.files[0]  # assumes only one array in the file
-    arr = data[key]      # shape: (50, 15)
+    key = data.files[0]
+    arr = data[key]
     
     if arr.shape != (50, 15):
         raise ValueError(f"Expected (50, 15), got {arr.shape}")
@@ -23,20 +19,17 @@ def load_sequence_from_npz(path: str, label: int) -> tuple[torch.Tensor, torch.T
     tcp_z_data = arr[:, 5].reshape((50,1))
 
     # Extract last 6 columns (Fx, Fy, Fz, Tx, Ty, Tz)
-    wrench_data =  arr[:, 9:]  # shape: (50, 6)
+    wrench_data =  arr[:, 9:]
     
     data = np.hstack((crate_z_data, tcp_z_data, wrench_data))
     # Convert to PyTorch tensor, add batch dim
-    X_tensor = torch.tensor(data, dtype=torch.float32).unsqueeze(0)  # shape: (1, 50, 6)
-    y_tensor = torch.tensor([[label]], dtype=torch.float32)                # shape: (1, 1)
+    X_tensor = torch.tensor(wrench_data, dtype=torch.float32).unsqueeze(0)
+    y_tensor = torch.tensor([[label]], dtype=torch.float32)
 
     return X_tensor, y_tensor
 
 def load_dataset_from_folder(folder: str, id: str = "") -> tuple[torch.Tensor, torch.Tensor]:
-    """
-    Loads .npz files in the folder with optional ID in the filename.
-    For example: id='(onpallet)' will match data(onpallet)*_*.npz.
-    """
+
     X_list = []
     y_list = []
 
@@ -64,11 +57,10 @@ def load_dataset_from_folder(folder: str, id: str = "") -> tuple[torch.Tensor, t
     y = torch.cat(y_list, dim=0).to("cuda")
     return X, y
 
-#########################################################################33
+######################################################################### SETUP FINISHED
 
-# Parameters
-sequence_length = 50  # e.g. 100 timesteps per motion
-input_size = 8         # fx, fy, fz, tx, ty, tz
+sequence_length = 50
+input_size = 6         # fx, fy, fz, tx, ty, tz
 hidden_size = 32
 num_layers = 1
 
@@ -102,7 +94,7 @@ class MotionClassifier(nn.Module):
         return self.sigmoid(x)
 
 model = MotionClassifier()
-model.to("cuda")
+model.to("cuda") # Move model to GPU to accelerate training
 
 # Training setup
 criterion = nn.BCELoss()
